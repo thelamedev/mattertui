@@ -1,9 +1,3 @@
----
-Author: HeartBeat1608
-Date: 2025-12-02
-Version: 0.1.0
----
-
 # MatterTUI
 
 MatterTUI is a Slack-style team chat platform built using Go for both the backend server and terminal user interface (TUI) client.
