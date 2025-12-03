@@ -5,6 +5,7 @@ import "github.com/spf13/viper"
 type Config struct {
 	Database DatabaseConfig `mapstructure:"database"`
 	Server   ServerConfig   `mapstructure:"server"`
+	Auth     AuthConfig     `mapstructure:"auth"`
 }
 
 type DatabaseConfig struct {
@@ -14,6 +15,10 @@ type DatabaseConfig struct {
 type ServerConfig struct {
 	BindAddr string `mapstructure:"bind_addr"`
 	Debug    bool   `mapstructure:"debug"`
+}
+
+type AuthConfig struct {
+	JWTSecret string `mapstructure:"jwt_secret"`
 }
 
 func LoadConfig(configPaths ...string) (*Config, error) {

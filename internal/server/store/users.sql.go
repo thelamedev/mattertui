@@ -7,55 +7,94 @@ package store
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-  username, password_hash
+  username, email, password_hash
 ) VALUES (
-  $1, $2
+  $1, $2, $3
 )
-RETURNING id, username, password_hash, created_at, updated_at
+RETURNING id, username, email, password_hash, password_version, created_at, updated_at
 `
 
 type CreateUserParams struct {
 	Username     string
+	Email        string
 	PasswordHash string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Username, arg.PasswordHash)
+	row := q.db.QueryRow(ctx, createUser, arg.Username, arg.Email, arg.PasswordHash)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
+		&i.Email,
 		&i.PasswordHash,
+		&i.PasswordVersion,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const getUser = `-- name: GetUser :one
-SELECT id, username, password_hash, created_at, updated_at FROM users
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, username, email, password_hash, password_version, created_at, updated_at FROM users
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.PasswordVersion,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT id, username, email, password_hash, password_version, created_at, updated_at FROM users
 WHERE username = $1 LIMIT 1
 `
 
-func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRow(ctx, getUser, username)
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
+		&i.Email,
 		&i.PasswordHash,
+		&i.PasswordVersion,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
+const getUserPasswordVersionByUserID = `-- name: GetUserPasswordVersionByUserID :one
+SELECT password_version FROM users
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserPasswordVersionByUserID(ctx context.Context, id pgtype.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, getUserPasswordVersionByUserID, id)
+	var password_version int32
+	err := row.Scan(&password_version)
+	return password_version, err
+}
+
 const listUsers = `-- name: ListUsers :many
-SELECT id, username, password_hash, created_at, updated_at FROM users
+SELECT id, username, email, password_hash, password_version, created_at, updated_at FROM users
 ORDER BY id
 `
 
@@ -71,7 +110,9 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Username,
+			&i.Email,
 			&i.PasswordHash,
+			&i.PasswordVersion,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
