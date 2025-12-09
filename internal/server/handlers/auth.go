@@ -58,12 +58,13 @@ func HandleRegisterUser(c *gin.Context) {
 		return
 	}
 
+	newUser.PasswordHash = ""
 	c.JSON(http.StatusOK, gin.H{"user": newUser, "token": token})
 }
 
 type loginUserRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `json:"username" binding:"required,min=3,max=32"`
+	Password string `json:"password" binding:"required,min=6,max=32"`
 }
 
 func HandleLoginUser(c *gin.Context) {
@@ -83,12 +84,12 @@ func HandleLoginUser(c *gin.Context) {
 	}
 
 	if err := util.ComparePasswordHash(user.PasswordHash, body.Password); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password", "details": err.Error()})
 		return
 	}
 
 	token, err := util.GenerateToken(jwt.MapClaims{
-		"user_id": user.ID,
+		"user_id": user.ID.String(),
 		"version": user.PasswordVersion,
 		"iat":     time.Now().Unix(),
 		"exp":     time.Now().Add(jwtExpiry).Unix(),
@@ -98,5 +99,6 @@ func HandleLoginUser(c *gin.Context) {
 		return
 	}
 
+	user.PasswordHash = ""
 	c.JSON(http.StatusOK, gin.H{"user": user, "token": token})
 }

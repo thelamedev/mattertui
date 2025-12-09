@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
@@ -55,9 +54,6 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		log.Printf("claims: %v", claims)
-		log.Printf("pwdVersion: %v", pwdVersion)
-
 		claimedVersion, ok := claims["version"]
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -66,7 +62,7 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		claimedVersionInt, ok := claimedVersion.(int32)
+		claimedVersionFloat, ok := claimedVersion.(float64)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "version claim is invalid",
@@ -74,7 +70,7 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		if claimedVersionInt != pwdVersion {
+		if int32(claimedVersionFloat) != pwdVersion {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "password version mismatch",
 			})
@@ -82,7 +78,7 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 		}
 
 		c.Set("user_id", userID)
-		c.Set("version", claimedVersionInt)
+		c.Set("version", int32(claimedVersionFloat))
 
 		c.Next()
 	}

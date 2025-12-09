@@ -9,11 +9,11 @@ import (
 )
 
 type User struct {
-	ID              pgtype.UUID
-	Username        string
-	Email           string
-	PasswordHash    string
-	PasswordVersion int32
-	CreatedAt       pgtype.Timestamptz
-	UpdatedAt       pgtype.Timestamptz
+	ID              pgtype.UUID        `json:"id"`
+	Username        string             `json:"username"`
+	Email           string             `json:"email"`
+	PasswordHash    string             `json:"-"`
+	PasswordVersion int32              `json:"-"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }

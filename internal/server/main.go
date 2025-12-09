@@ -64,6 +64,7 @@ func (s *Server) routes() {
 
 	public := v1.Group("/")
 	{
+		public.GET("/healthz", handlers.HandleHealthCheck)
 		public.POST("/auth/register", handlers.HandleRegisterUser)
 		public.POST("/auth/login", handlers.HandleLoginUser)
 	}
